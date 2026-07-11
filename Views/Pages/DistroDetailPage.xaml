@@ -140,6 +140,13 @@
                         Command="{Binding SetDefaultCommand}"
                         Content="Definir padrão"
                         Icon="{ui:SymbolIcon Star20}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Appearance="Secondary"
+                        Command="{Binding RenameCommand}"
+                        Content="Renomear…"
+                        Icon="{ui:SymbolIcon Rename24}"
+                        Visibility="{Binding CanRename, Converter={StaticResource BoolToVis}}" />
                 </WrapPanel>
             </ui:Card>
 

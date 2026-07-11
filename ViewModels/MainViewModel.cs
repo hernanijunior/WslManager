@@ -248,6 +248,43 @@ public sealed partial class MainViewModel : ObservableObject
             (wsl, _, ct) => wsl.UnregisterAsync(distro.Name, ct));
     }
 
+    /// <summary>
+    /// Renomeia a distro (edita DistributionName no registro — dados e vhdx
+    /// intactos). Encerra antes se estiver rodando; nunca para distros de sistema.
+    /// </summary>
+    internal async Task RenameDistroAsync(DistroViewModel distro)
+    {
+        if (distro.IsSystem) return; // Docker/Rancher referenciam o nome: renomear quebraria
+
+        var dlg = new RenameDistroDialog(distro.Name, Distros.Select(d => d.Name))
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        if (dlg.ShowDialog() != true || dlg.NewName is not { } newName) return;
+
+        var oldName = distro.Name;
+        await ExecuteAsync(
+            $"Renomeando {oldName} → {newName}…",
+            async (wsl, ct) =>
+            {
+                if (distro.IsRunning)
+                {
+                    var stop = await wsl.TerminateAsync(oldName, ct);
+                    if (!stop.Ok) return stop; // não renomear com a distro de pé
+                }
+                wsl.Rename(distro.Guid, newName);
+                return new WslResult(0, string.Empty, string.Empty);
+            },
+            confirm: distro.IsRunning
+                ? $"\"{oldName}\" está em execução e será encerrada para renomear.\n\nContinuar?"
+                : null);
+
+        // reabre o detalhe já apontando para o VM novo (o refresh reconstruiu a lista)
+        if (Distros.FirstOrDefault(d => d.Name.Equals(newName, StringComparison.OrdinalIgnoreCase))
+            is { } renamed)
+            RequestDetail(renamed);
+    }
+
     /// <summary>Pós-import: oferece criar o usuário padrão da distro.</summary>
     private async Task OfferUserSetupAsync(string distro)
     {

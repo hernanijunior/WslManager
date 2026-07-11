@@ -230,9 +230,15 @@ public sealed class WslService
         return list;
     }
 
-    /// <summary>Instala do catálogo. `--no-launch` é obrigatório (senão abre console interativo).</summary>
-    public Task<WslResult> InstallFromCatalogAsync(string name, CancellationToken ct)
-        => RunLongAsync(ct, "--install", "-d", name, "--no-launch");
+    /// <summary>
+    /// Instala do catálogo. `--no-launch` é obrigatório (senão abre console
+    /// interativo). <paramref name="customName"/> permite instalar uma segunda
+    /// cópia da mesma versão com outro nome (WSL 2.4.4+: `--name`).
+    /// </summary>
+    public Task<WslResult> InstallFromCatalogAsync(string catalogName, string? customName, CancellationToken ct)
+        => customName is null
+            ? RunLongAsync(ct, "--install", "-d", catalogName, "--no-launch")
+            : RunLongAsync(ct, "--install", "-d", catalogName, "--no-launch", "--name", customName);
 
     /// <summary>Importa um .tar* criando o vhdx em <paramref name="installLocation"/>.</summary>
     public Task<WslResult> ImportAsync(string name, string installLocation, string tarPath, CancellationToken ct)
@@ -259,6 +265,18 @@ public sealed class WslService
     /// </summary>
     public Task<WslResult> UnregisterAsync(string name, CancellationToken ct)
         => RunLongAsync(ct, "--unregister", name);
+
+    /// <summary>
+    /// Renomeia a distro editando <c>DistributionName</c> no registro — o wsl.exe
+    /// não tem comando de rename. A distro deve estar PARADA (o chamador encerra
+    /// antes); o vhdx e o BasePath não mudam, só o nome.
+    /// </summary>
+    public void Rename(string guid, string newName)
+    {
+        using var key = Registry.CurrentUser.OpenSubKey($@"{LxssKeyPath}\{guid}", writable: true)
+            ?? throw new InvalidOperationException("Distro não encontrada no registro.");
+        key.SetValue("DistributionName", newName);
+    }
 
     /// <summary>
     /// Cria o usuário padrão numa distro recém-importada: useradd (+sudo),

@@ -66,11 +66,35 @@ public sealed partial class NewDistroViewModel : ObservableObject
     [ObservableProperty]
     private OnlineDistro? _selectedOnline;
 
+    /// <summary>
+    /// Nome com que a distro será registrada. Editável para permitir uma
+    /// segunda cópia da mesma versão (wsl --install --name).
+    /// </summary>
+    [ObservableProperty]
+    private string _catalogInstallName = string.Empty;
+
     [ObservableProperty]
     private bool _isLoadingCatalog;
 
     [ObservableProperty]
     private string? _catalogError;
+
+    partial void OnSelectedOnlineChanged(OnlineDistro? value)
+    {
+        if (value is not null)
+            CatalogInstallName = SuggestFreeName(value.Name);
+    }
+
+    /// <summary>Se o nome já existe, sugere "<nome>-2", "<nome>-3", …</summary>
+    private string SuggestFreeName(string baseName)
+    {
+        if (!_existingNames.Contains(baseName)) return baseName;
+        for (var i = 2; ; i++)
+        {
+            var candidate = $"{baseName}-{i}";
+            if (!_existingNames.Contains(candidate)) return candidate;
+        }
+    }
 
     [RelayCommand]
     private async Task LoadCatalogAsync()
@@ -217,11 +241,18 @@ public sealed partial class NewDistroViewModel : ObservableObject
             return null;
         }
 
-        var name = SelectedOnline.Name;
+        var catalogName = SelectedOnline.Name;
+        var name = CatalogInstallName.Trim();
+        if (name.Length == 0) name = catalogName;
+        if (!ValidateNewName(name)) return null; // colisão/regex — vale também p/ o nome original
+
+        // só passa --name quando difere do nome de catálogo
+        var custom = name.Equals(catalogName, StringComparison.OrdinalIgnoreCase) ? null : name;
+
         return new NewDistroRequest(
             $"Instalando {name}…",
             name,
-            (wsl, _, ct) => wsl.InstallFromCatalogAsync(name, ct),
+            (wsl, _, ct) => wsl.InstallFromCatalogAsync(catalogName, custom, ct),
             SetupUserForDistro: null);
     }
 

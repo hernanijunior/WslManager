@@ -1,0 +1,64 @@
+<ui:FluentWindow
+    x:Class="WslManager.Views.RenameDistroDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Renomear distro"
+    Width="440"
+    Height="300"
+    ExtendsContentIntoTitleBar="True"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowBackdropType="Mica"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="Renomear distro"
+            CanMaximize="False"
+            ShowMaximize="False"
+            ShowMinimize="False" />
+
+        <StackPanel Grid.Row="1" Margin="20,8,20,0">
+            <TextBlock
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                Text="O nome muda apenas no registro do WSL — o disco (vhdx) e os dados ficam intactos. Se a distro estiver em execução, será encerrada antes."
+                TextWrapping="Wrap" />
+
+            <TextBlock Margin="0,16,0,4" Text="Novo nome" />
+            <ui:TextBox x:Name="NameBox" TextChanged="OnNameChanged" />
+            <TextBlock
+                x:Name="HintText"
+                Margin="0,6,0,0"
+                FontSize="12"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="20,16,20,16"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <ui:Button
+                Appearance="Secondary"
+                Click="OnCancel"
+                Content="Cancelar" />
+            <ui:Button
+                x:Name="OkButton"
+                Margin="8,0,0,0"
+                Appearance="Primary"
+                Click="OnRename"
+                Content="Renomear"
+                Icon="{ui:SymbolIcon Rename24}"
+                IsEnabled="False" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

@@ -76,6 +76,9 @@ public sealed partial class DistroViewModel : ObservableObject
     /// <summary>Distros de sistema nunca podem ser apagadas por aqui.</summary>
     public bool CanDelete => !IsSystem;
 
+    /// <summary>Renomear distro de sistema quebraria o Docker/Rancher (referenciam o nome).</summary>
+    public bool CanRename => !IsSystem;
+
     [RelayCommand]
     private void OpenDetail() => _owner.RequestDetail(this);
 
@@ -84,6 +87,9 @@ public sealed partial class DistroViewModel : ObservableObject
 
     [RelayCommand]
     private Task ExportAsync() => _owner.ExportDistroAsync(this);
+
+    [RelayCommand(CanExecute = nameof(CanRename))]
+    private Task RenameAsync() => _owner.RenameDistroAsync(this);
 
     [RelayCommand(CanExecute = nameof(CanDelete))]
     private Task DeleteAsync() => _owner.DeleteDistroAsync(this);

@@ -17,7 +17,7 @@ Interface com **NavigationView** (menu lateral) dividida em duas páginas — **
 
 ### Nova distro (3 abas)
 
-- **Catálogo**: parseia `wsl --list --online` e instala com `wsl --install -d <NAME> --no-launch`
+- **Catálogo**: parseia `wsl --list --online` e instala com `wsl --install -d <NAME> --no-launch`; campo de **nome personalizado** (`--name`) permite várias cópias da mesma versão — se o nome já existir, sugere `<nome>-2`, `<nome>-3`, …
 - **De arquivo**: importa `.tar/.tar.gz/.tar.xz` (`wsl --import`) ou `.wsl` (`wsl --install --from-file`), escolhendo nome e pasta do vhdx (padrão `%LocalAppData%\WslManager\distros\<nome>`), validando colisão de nome
 - **Clonar**: export + import + limpeza do `.tar` temporário, tudo como **uma** operação longa
 - Pós-import: diálogo opcional de **usuário padrão** (useradd + sudo + `[user]` no `/etc/wsl.conf`)
@@ -25,6 +25,7 @@ Interface com **NavigationView** (menu lateral) dividida em duas páginas — **
 ### Página de detalhe da distro
 
 - Metadados completos: estado, versão, tamanho, caminho base, caminho do vhdx, GUID
+- **Renomear**: edita `DistributionName` no registro (dados e vhdx intactos; encerra antes se estiver rodando; indisponível para distros de sistema)
 - **Recuperar espaço**: `wsl --manage <distro> --set-sparse true` (encerra antes se preciso) mostrando o tamanho em disco **antes/depois**
 - **Exportar** backup: `wsl --export` com nome sugerido `<distro>_<yyyy-MM-dd>.tar`
 - **Apagar** (`wsl --unregister`) com fluxo blindado: mostra o que será perdido, oferece exportar antes e só habilita ao digitar o nome exato — nunca disponível para distros de sistema
