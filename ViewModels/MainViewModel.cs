@@ -52,8 +52,18 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool IsIdle => !IsBusy;
 
+    /// <summary>Editor do .wslconfig (página Configuração).</summary>
+    public WslConfigViewModel Config { get; }
+
     public MainViewModel()
     {
+        Config = new WslConfigViewModel(
+            new WslConfigService(),
+            SystemInfo.TotalPhysicalMemoryGb(),
+            SystemInfo.ProcessorCount,
+            SystemInfo.MirroredNetworkingSupported,
+            RestartWslAsync);
+
         // "--list --running" e leitura de registro não acordam nada: polling seguro.
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _timer.Tick += async (_, _) => await RefreshAsync();
@@ -113,6 +123,12 @@ public sealed partial class MainViewModel : ObservableObject
         "Desligando a VM do WSL…",
         (wsl, ct) => wsl.ShutdownAsync(ct),
         confirm: "Isso derruba a VM inteira: TODAS as distros, incluindo docker-desktop se estiver em uso.\n\nDesligar tudo?");
+
+    /// <summary>Usado por "Salvar e reiniciar" na página Configuração.</summary>
+    internal Task RestartWslAsync() => ExecuteAsync(
+        "Reiniciando o WSL…",
+        (wsl, ct) => wsl.ShutdownAsync(ct),
+        confirm: "Reiniciar o WSL encerra a VM inteira (todas as distros, inclusive docker-desktop).\n\nContinuar?");
 
     [RelayCommand]
     private async Task NewDistroAsync()

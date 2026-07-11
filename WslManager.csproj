@@ -26,4 +26,12 @@
     <PackageReference Include="WPF-UI" Version="4.*" />
   </ItemGroup>
 
+  <!-- O projeto de teste vive numa subpasta; o app não deve varrer os .cs dele. -->
+  <ItemGroup>
+    <Compile Remove="WslManager.Tests\**" />
+    <Page Remove="WslManager.Tests\**" />
+    <None Remove="WslManager.Tests\**" />
+    <EmbeddedResource Remove="WslManager.Tests\**" />
+  </ItemGroup>
+
 </Project>

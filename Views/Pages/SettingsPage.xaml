@@ -5,8 +5,20 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Configuração">
 
+    <Page.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="FieldHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Page.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="16" MaxWidth="560" VerticalAlignment="Top">
+        <StackPanel Margin="16" MaxWidth="620" VerticalAlignment="Top">
 
             <!-- Preferências do app -->
             <TextBlock
@@ -20,12 +32,8 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock FontWeight="SemiBold" Text="Alerta de disco (GB)" />
-                        <TextBlock
-                            FontSize="12"
-                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                            Text="Mostra um aviso quando o ext4.vhdx passa deste tamanho."
-                            TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Alerta de disco (GB)" />
+                        <TextBlock Style="{StaticResource FieldHint}" Text="Mostra um aviso quando o ext4.vhdx passa deste tamanho." />
                     </StackPanel>
                     <ui:NumberBox
                         Grid.Column="1"
@@ -45,13 +53,201 @@
                 FontSize="20"
                 FontWeight="SemiBold"
                 Text="Configuração global (.wslconfig)" />
-            <ui:InfoBar
-                Title="Em breve"
-                Margin="0,12,0,0"
-                IsClosable="False"
-                IsOpen="True"
-                Message="O editor do %UserProfile%\.wslconfig (memória, processadores, swap, rede…) será implementado na Fase 4."
-                Severity="Informational" />
+            <TextBlock
+                Margin="0,4,0,0"
+                Style="{StaticResource FieldHint}"
+                Text="{Binding Config.ConfigPath, StringFormat='Arquivo: {0}'}" />
+
+            <!-- Presets -->
+            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{StaticResource FieldHint}"
+                    Text="Presets:" />
+                <ui:Button
+                    Margin="10,0,0,0"
+                    Appearance="Secondary"
+                    Command="{Binding Config.PresetLeveCommand}"
+                    Content="Leve" />
+                <ui:Button
+                    Margin="8,0,0,0"
+                    Appearance="Secondary"
+                    Command="{Binding Config.PresetDevCommand}"
+                    Content="Dev" />
+                <TextBlock
+                    Margin="10,0,0,0"
+                    VerticalAlignment="Center"
+                    Style="{StaticResource FieldHint}"
+                    Text="(só preenchem o formulário; não salvam)" />
+            </StackPanel>
+
+            <ui:Card Margin="0,12,0,0" Padding="16">
+                <StackPanel>
+                    <!-- memory -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="90" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Memória" />
+                        <Slider
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True"
+                            Maximum="{Binding Config.MaxMemoryGb}"
+                            Minimum="0"
+                            TickFrequency="1"
+                            Value="{Binding Config.MemoryGb}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Text="{Binding Config.MemoryGb, StringFormat='{}{0:0} GB'}" />
+                    </Grid>
+
+                    <!-- processors -->
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="90" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Processadores" />
+                        <Slider
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True"
+                            Maximum="{Binding Config.MaxProcessors}"
+                            Minimum="0"
+                            TickFrequency="1"
+                            Value="{Binding Config.Processors}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Text="{Binding Config.Processors, StringFormat='{}{0:0}'}" />
+                    </Grid>
+
+                    <!-- swap -->
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="90" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="Swap" />
+                        <Slider
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            IsSnapToTickEnabled="True"
+                            Maximum="{Binding Config.MaxMemoryGb}"
+                            Minimum="0"
+                            TickFrequency="1"
+                            Value="{Binding Config.SwapGb}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Text="{Binding Config.SwapGb, StringFormat='{}{0:0} GB'}" />
+                    </Grid>
+
+                    <TextBlock
+                        Margin="0,6,0,0"
+                        Style="{StaticResource FieldHint}"
+                        Text="0 nos sliders acima = não definir a chave (usa o padrão do WSL)." />
+
+                    <!-- vmIdleTimeout -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="vmIdleTimeout" />
+                            <TextBlock Style="{StaticResource FieldHint}" Text="ms (0 = não definir)" />
+                        </StackPanel>
+                        <ui:NumberBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            Width="160"
+                            ClearButtonEnabled="False"
+                            Minimum="0"
+                            SmallChange="1000"
+                            Value="{Binding Config.VmIdleTimeout, Mode=TwoWay}" />
+                    </Grid>
+
+                    <!-- autoMemoryReclaim -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="autoMemoryReclaim" />
+                        <ComboBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            Width="200"
+                            ItemsSource="{Binding Config.AutoReclaimOptions}"
+                            SelectedItem="{Binding Config.AutoMemoryReclaim}" />
+                    </Grid>
+
+                    <!-- networkingMode -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Style="{StaticResource FieldLabel}" Text="networkingMode" />
+                        <ComboBox
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            Width="200"
+                            SelectedValue="{Binding Config.NetworkingMode}"
+                            SelectedValuePath="Content">
+                            <ComboBoxItem Content="(padrão)" />
+                            <ComboBoxItem Content="NAT" />
+                            <ComboBoxItem
+                                Content="mirrored"
+                                IsEnabled="{Binding Config.MirroredSupported}"
+                                ToolTip="Requer Windows 11 22H2+; indisponível no Windows 10." />
+                        </ComboBox>
+                    </Grid>
+
+                    <!-- sparseVhd -->
+                    <Grid Margin="0,16,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="170" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="sparseVhd" />
+                            <TextBlock Style="{StaticResource FieldHint}" Text="discos esparsos por padrão" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            IsChecked="{Binding Config.SparseVhd}" />
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Ações -->
+            <StackPanel Margin="0,16,0,0" Orientation="Horizontal">
+                <ui:Button
+                    Appearance="Primary"
+                    Command="{Binding Config.SaveCommand}"
+                    Content="Salvar"
+                    Icon="{ui:SymbolIcon Save24}"
+                    IsEnabled="{Binding IsIdle}" />
+                <ui:Button
+                    Margin="8,0,0,0"
+                    Appearance="Secondary"
+                    Command="{Binding Config.SaveAndRestartCommand}"
+                    Content="Salvar e reiniciar WSL"
+                    Icon="{ui:SymbolIcon ArrowClockwise20}"
+                    IsEnabled="{Binding IsIdle}" />
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </Page>
