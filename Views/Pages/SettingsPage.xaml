@@ -5,19 +5,53 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="Configuração">
 
-    <Grid Margin="16">
-        <StackPanel MaxWidth="560" VerticalAlignment="Top">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16" MaxWidth="560" VerticalAlignment="Top">
+
+            <!-- Preferências do app -->
             <TextBlock
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Preferências do app" />
+            <ui:Card Margin="0,12,0,0" Padding="16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontWeight="SemiBold" Text="Alerta de disco (GB)" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Text="Mostra um aviso quando o ext4.vhdx passa deste tamanho."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ui:NumberBox
+                        Grid.Column="1"
+                        Width="130"
+                        VerticalAlignment="Center"
+                        ClearButtonEnabled="False"
+                        Maximum="2048"
+                        Minimum="1"
+                        SmallChange="5"
+                        Value="{Binding DiskAlertThresholdGb, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+            </ui:Card>
+
+            <!-- Configuração global (.wslconfig) -->
+            <TextBlock
+                Margin="0,28,0,0"
                 FontSize="20"
                 FontWeight="SemiBold"
                 Text="Configuração global (.wslconfig)" />
             <ui:InfoBar
                 Title="Em breve"
-                Margin="0,16,0,0"
+                Margin="0,12,0,0"
                 IsClosable="False"
                 IsOpen="True"
                 Message="O editor do %UserProfile%\.wslconfig (memória, processadores, swap, rede…) será implementado na Fase 4."
                 Severity="Informational" />
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

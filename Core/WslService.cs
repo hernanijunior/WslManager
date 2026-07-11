@@ -247,6 +247,13 @@ public sealed class WslService
         => RunLongAsync(ct, "--export", name, tarPath);
 
     /// <summary>
+    /// Marca o vhdx como esparso (<c>wsl --manage &lt;distro&gt; --set-sparse true</c>),
+    /// permitindo ao Windows devolver o espaço livre interno. Exige a distro parada.
+    /// </summary>
+    public Task<WslResult> SetSparseAsync(string name, CancellationToken ct)
+        => RunLongAsync(ct, "--manage", name, "--set-sparse", "true");
+
+    /// <summary>
     /// Cria o usuário padrão numa distro recém-importada: useradd (+sudo),
     /// senha opcional e grava [user] no /etc/wsl.conf. Roda como root e passa
     /// usuário/senha como argv ($1/$2) para não interpolar no script (injeção).

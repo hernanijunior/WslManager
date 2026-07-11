@@ -32,6 +32,7 @@ public sealed partial class DistroViewModel : ObservableObject
         OnPropertyChanged(nameof(IsSystem));
         OnPropertyChanged(nameof(VhdSizeText));
         OnPropertyChanged(nameof(VhdBytes));
+        OnPropertyChanged(nameof(DiskAlert));
         OnPropertyChanged(nameof(VersionText));
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(BasePath));
@@ -66,8 +67,17 @@ public sealed partial class DistroViewModel : ObservableObject
     public bool CanSetDefault => !IsDefault && !IsSystem;
     public bool CanOpenExplorer => IsRunning; // \\wsl.localhost acorda a distro se parada
 
+    /// <summary>Disco acima do limiar configurado (alerta visual).</summary>
+    public bool DiskAlert => _owner.IsDiskAlert(Model.VhdBytes);
+
+    /// <summary>Chamado quando o limiar muda, para reavaliar <see cref="DiskAlert"/>.</summary>
+    public void RaiseDiskAlert() => OnPropertyChanged(nameof(DiskAlert));
+
     [RelayCommand]
     private void OpenDetail() => _owner.RequestDetail(this);
+
+    [RelayCommand]
+    private Task ReclaimSpaceAsync() => _owner.ReclaimSpaceAsync(this);
 
     [RelayCommand(CanExecute = nameof(CanWake))]
     private Task WakeAsync() => _owner.ExecuteAsync(

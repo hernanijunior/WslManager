@@ -20,7 +20,7 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
 
         var distrosPage = new DistrosPage { DataContext = _viewModel };
-        var settingsPage = new SettingsPage();
+        var settingsPage = new SettingsPage { DataContext = _viewModel };
 
         RootNavigation.SetPageProviderService(
             new PageProvider(distrosPage, settingsPage, _detailPage));

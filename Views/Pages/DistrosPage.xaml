@@ -137,6 +137,14 @@
                                                         Visibility="{Binding IsSystem, Converter={StaticResource BoolToVis}}">
                                                         <TextBlock FontSize="11" Text="sistema" />
                                                     </Border>
+                                                    <ui:SymbolIcon
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Filled="True"
+                                                        Foreground="#E9A23B"
+                                                        Symbol="Warning24"
+                                                        ToolTip="Disco acima do limite configurado"
+                                                        Visibility="{Binding DiskAlert, Converter={StaticResource BoolToVis}}" />
                                                 </StackPanel>
                                                 <TextBlock
                                                     Margin="0,2,0,0"

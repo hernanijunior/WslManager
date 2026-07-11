@@ -14,7 +14,26 @@ public sealed partial class MainViewModel : ObservableObject
     internal WslService Wsl { get; } = new();
     internal LongOperationManager LongOps { get; } = new();
 
+    private readonly AppSettingsService _settings = new();
     private readonly DispatcherTimer _timer;
+
+    /// <summary>Uma distro está acima do limiar de alerta de disco?</summary>
+    internal bool IsDiskAlert(long vhdBytes) => vhdBytes > _settings.Current.DiskAlertThresholdBytes;
+
+    /// <summary>Limiar de alerta de disco, em GB (editável na página Configuração).</summary>
+    public double DiskAlertThresholdGb
+    {
+        get => _settings.Current.DiskAlertThresholdBytes / (1024.0 * 1024 * 1024);
+        set
+        {
+            var bytes = (long)Math.Round(Math.Max(1, value) * 1024 * 1024 * 1024);
+            if (bytes == _settings.Current.DiskAlertThresholdBytes) return;
+            _settings.Current.DiskAlertThresholdBytes = bytes;
+            _settings.Save();
+            OnPropertyChanged();
+            foreach (var d in Distros) d.RaiseDiskAlert();
+        }
+    }
 
     public ObservableCollection<DistroViewModel> Distros { get; } = [];
 
@@ -111,6 +130,54 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (ok && req.SetupUserForDistro is { } distro)
             await OfferUserSetupAsync(distro);
+    }
+
+    /// <summary>
+    /// "Recuperar espaço" (detalhe da distro): se rodando, oferece encerrar;
+    /// marca o vhdx como esparso e mostra o tamanho em disco antes/depois.
+    /// </summary>
+    internal async Task ReclaimSpaceAsync(DistroViewModel distro)
+    {
+        var wasRunning = distro.IsRunning;
+        if (wasRunning &&
+            MessageBox.Show(
+                $"Para recuperar espaço, \"{distro.Name}\" precisa ser encerrada primeiro.\n\nEncerrar agora e continuar?",
+                "Recuperar espaço", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+            return;
+
+        var vhdx = distro.VhdxPath;
+        var before = DiskUtil.GetSizeOnDisk(vhdx);
+
+        var ok = await RunLongOperationAsync(
+            $"Recuperando espaço em {distro.Name}…",
+            distro.Name,
+            async (wsl, progress, ct) =>
+            {
+                if (wasRunning)
+                {
+                    progress.Report(LongOpUpdate.WithStatus($"Encerrando {distro.Name}…"));
+                    await wsl.TerminateAsync(distro.Name, ct); // resultado ignorado
+                }
+                progress.Report(LongOpUpdate.WithStatus("Compactando o disco (set-sparse)…"));
+                return await wsl.SetSparseAsync(distro.Name, ct);
+            });
+
+        if (!ok) return;
+
+        var after = DiskUtil.GetSizeOnDisk(vhdx);
+        if (before < 0 || after < 0)
+        {
+            MessageBox.Show("Compactação concluída.", "Recuperar espaço",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var freed = Math.Max(0, before - after);
+        MessageBox.Show(
+            $"Tamanho em disco antes:  {ByteSize.Humanize(before)}\n" +
+            $"Tamanho em disco depois: {ByteSize.Humanize(after)}\n\n" +
+            $"Espaço recuperado: {ByteSize.Humanize(freed)}",
+            "Recuperar espaço", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     /// <summary>Pós-import: oferece criar o usuário padrão da distro.</summary>
