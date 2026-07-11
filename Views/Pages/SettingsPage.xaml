@@ -1,0 +1,23 @@
+<Page
+    x:Class="WslManager.Views.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Configuração">
+
+    <Grid Margin="16">
+        <StackPanel MaxWidth="560" VerticalAlignment="Top">
+            <TextBlock
+                FontSize="20"
+                FontWeight="SemiBold"
+                Text="Configuração global (.wslconfig)" />
+            <ui:InfoBar
+                Title="Em breve"
+                Margin="0,16,0,0"
+                IsClosable="False"
+                IsOpen="True"
+                Message="O editor do %UserProfile%\.wslconfig (memória, processadores, swap, rede…) será implementado na Fase 4."
+                Severity="Informational" />
+        </StackPanel>
+    </Grid>
+</Page>

@@ -1,0 +1,160 @@
+<Page
+    x:Class="WslManager.Views.Pages.DistroDetailPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:WslManager.ViewModels"
+    Title="Detalhe da distro"
+    d:DataContext="{d:DesignInstance Type=vm:DistroViewModel}"
+    d:DesignHeight="560"
+    d:DesignWidth="700"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <Style x:Key="MetaLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="Margin" Value="0,0,16,0" />
+            <Setter Property="Width" Value="130" />
+        </Style>
+        <Style x:Key="MetaValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20,12,20,20" MaxWidth="720" HorizontalAlignment="Left">
+
+            <!-- Cabeçalho -->
+            <StackPanel Orientation="Horizontal">
+                <Ellipse
+                    Width="12"
+                    Height="12"
+                    Margin="0,0,12,0"
+                    VerticalAlignment="Center"
+                    ToolTip="{Binding StateText}">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#6E6E6E" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                    <Setter Property="Fill" Value="#4CC26B" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock
+                    FontSize="24"
+                    FontWeight="SemiBold"
+                    Text="{Binding Name}" />
+                <Border
+                    Margin="10,4,0,0"
+                    Padding="6,1"
+                    VerticalAlignment="Center"
+                    Background="#33569CD6"
+                    CornerRadius="4"
+                    Visibility="{Binding IsDefault, Converter={StaticResource BoolToVis}}">
+                    <TextBlock FontSize="11" Text="padrão" />
+                </Border>
+                <Border
+                    Margin="6,4,0,0"
+                    Padding="6,1"
+                    VerticalAlignment="Center"
+                    Background="#33D67E56"
+                    CornerRadius="4"
+                    Visibility="{Binding IsSystem, Converter={StaticResource BoolToVis}}">
+                    <TextBlock FontSize="11" Text="sistema" />
+                </Border>
+            </StackPanel>
+
+            <!-- Metadados -->
+            <ui:Card Margin="0,16,0,0" Padding="16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="Estado" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding StateText}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="Versão WSL" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding VersionText}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="Tamanho do disco" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding VhdSizeText}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="Caminho base" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding BasePath}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="Disco (vhdx)" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding VhdxPath}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource MetaLabel}" Text="GUID" />
+                        <TextBlock Style="{StaticResource MetaValue}" Text="{Binding Guid}" />
+                    </StackPanel>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Ações -->
+            <TextBlock
+                Margin="2,20,0,0"
+                FontSize="15"
+                FontWeight="SemiBold"
+                Text="Ações" />
+            <ui:Card Margin="0,8,0,0" Padding="16">
+                <WrapPanel>
+                    <ui:Button
+                        Appearance="Success"
+                        Command="{Binding WakeCommand}"
+                        Content="Iniciar"
+                        Icon="{ui:SymbolIcon Play20}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Appearance="Danger"
+                        Command="{Binding TerminateCommand}"
+                        Content="Encerrar"
+                        Icon="{ui:SymbolIcon Stop20}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Appearance="Secondary"
+                        Command="{Binding OpenTerminalCommand}"
+                        Content="Terminal"
+                        Icon="{ui:SymbolIcon WindowConsole20}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Appearance="Secondary"
+                        Command="{Binding OpenExplorerCommand}"
+                        Content="Explorer"
+                        Icon="{ui:SymbolIcon FolderOpen20}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Appearance="Secondary"
+                        Command="{Binding SetDefaultCommand}"
+                        Content="Definir padrão"
+                        Icon="{ui:SymbolIcon Star20}" />
+                </WrapPanel>
+            </ui:Card>
+
+            <!-- Ações avançadas (preenchidas nas próximas fases) -->
+            <TextBlock
+                Margin="2,20,0,0"
+                FontSize="15"
+                FontWeight="SemiBold"
+                Text="Ações avançadas" />
+            <ui:InfoBar
+                Margin="0,8,0,0"
+                IsClosable="False"
+                IsOpen="True"
+                Message="Recuperar espaço (compactar vhdx), exportar backup e apagar serão adicionados nas próximas fases."
+                Severity="Informational" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

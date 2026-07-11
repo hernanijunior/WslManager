@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace WslManager.Core;
 
 /// <summary>
@@ -15,10 +17,10 @@ public sealed record Distro(
     long VhdBytes)
 {
     /// <summary>Tamanho do ext4.vhdx formatado (ex.: "12,4 GB").</summary>
-    public string VhdSizeText => VhdBytes switch
-    {
-        <= 0 => "—",
-        < 1024L * 1024 * 1024 => $"{VhdBytes / (1024.0 * 1024):N1} MB",
-        _ => $"{VhdBytes / (1024.0 * 1024 * 1024):N1} GB",
-    };
+    public string VhdSizeText => ByteSize.Humanize(VhdBytes);
+
+    /// <summary>Caminho completo do disco virtual (ext4.vhdx) da distro.</summary>
+    public string VhdxPath => string.IsNullOrEmpty(BasePath)
+        ? "—"
+        : Path.Combine(BasePath, "ext4.vhdx");
 }

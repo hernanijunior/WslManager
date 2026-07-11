@@ -34,7 +34,8 @@ public sealed class WslService
 
     // ─────────────────────────────── infra ───────────────────────────────
 
-    public async Task<WslResult> RunAsync(CancellationToken ct = default, params string[] args)
+    /// <summary>Monta o ProcessStartInfo com todas as armadilhas de interop tratadas.</summary>
+    private static ProcessStartInfo BuildStartInfo(string[] args)
     {
         var psi = new ProcessStartInfo(WslExePath)
         {
@@ -47,6 +48,12 @@ public sealed class WslService
         };
         foreach (var a in args) psi.ArgumentList.Add(a);
         psi.Environment["WSL_UTF8"] = "1"; // força UTF-8 (WSL >= 0.64)
+        return psi;
+    }
+
+    public async Task<WslResult> RunAsync(CancellationToken ct = default, params string[] args)
+    {
+        var psi = BuildStartInfo(args);
 
         using var p = Process.Start(psi)
             ?? throw new InvalidOperationException("Não foi possível iniciar wsl.exe.");
@@ -55,6 +62,41 @@ public sealed class WslService
         var stdoutTask = p.StandardOutput.ReadToEndAsync(ct);
         var stderrTask = p.StandardError.ReadToEndAsync(ct);
         await p.WaitForExitAsync(ct).ConfigureAwait(false);
+
+        return new WslResult(p.ExitCode, await stdoutTask, await stderrTask);
+    }
+
+    /// <summary>
+    /// Igual ao <see cref="RunAsync"/>, mas para operações longas (export,
+    /// import, install de catálogo, compactação): SEM timeout e, se o token for
+    /// cancelado, MATA a árvore do processo filho. Lança
+    /// <see cref="OperationCanceledException"/> ao cancelar.
+    /// </summary>
+    public async Task<WslResult> RunLongAsync(CancellationToken ct, params string[] args)
+    {
+        var psi = BuildStartInfo(args);
+
+        using var p = Process.Start(psi)
+            ?? throw new InvalidOperationException("Não foi possível iniciar wsl.exe.");
+
+        // Sem ct nas leituras: queremos drenar os buffers mesmo se cancelarmos
+        // pelo WaitForExit; o deadlock de buffer continua evitado (leitura async).
+        var stdoutTask = p.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var stderrTask = p.StandardError.ReadToEndAsync(CancellationToken.None);
+
+        try
+        {
+            await p.WaitForExitAsync(ct).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            try
+            {
+                if (!p.HasExited) p.Kill(entireProcessTree: true);
+            }
+            catch { /* já saiu ou não pôde ser morto */ }
+            throw;
+        }
 
         return new WslResult(p.ExitCode, await stdoutTask, await stderrTask);
     }
