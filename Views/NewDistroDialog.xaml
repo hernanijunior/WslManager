@@ -1,0 +1,210 @@
+<ui:FluentWindow
+    x:Class="WslManager.Views.NewDistroDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:core="clr-namespace:WslManager.Core"
+    xmlns:conv="clr-namespace:WslManager.Views"
+    Title="Nova distro"
+    Width="620"
+    Height="560"
+    ExtendsContentIntoTitleBar="True"
+    MinWidth="560"
+    MinHeight="480"
+    WindowBackdropType="Mica"
+    WindowStartupLocation="CenterOwner">
+
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InverseBooleanConverter x:Key="InverseBool" />
+        <conv:NotNullToBooleanConverter x:Key="NotNullToBool" />
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="Nova distro"
+            CanMaximize="False"
+            ShowMaximize="False"
+            ShowMinimize="False" />
+
+        <TabControl
+            Grid.Row="1"
+            Margin="16,4,16,0"
+            SelectedIndex="{Binding SelectedTab}">
+
+            <!-- ─────────────── Catálogo ─────────────── -->
+            <TabItem Header="Catálogo">
+                <Grid Margin="4,12,4,4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal">
+                        <ui:Button
+                            Appearance="Secondary"
+                            Command="{Binding LoadCatalogCommand}"
+                            Content="Recarregar"
+                            Icon="{ui:SymbolIcon ArrowClockwise20}"
+                            IsEnabled="{Binding IsLoadingCatalog, Converter={StaticResource InverseBool}}" />
+                        <ui:ProgressRing
+                            Width="20"
+                            Height="20"
+                            Margin="10,0,0,0"
+                            IsIndeterminate="True"
+                            Visibility="{Binding IsLoadingCatalog, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+
+                    <ui:InfoBar
+                        Grid.Row="0"
+                        Margin="0,44,0,0"
+                        IsClosable="False"
+                        IsOpen="{Binding CatalogError, Converter={StaticResource NotNullToBool}}"
+                        Message="{Binding CatalogError}"
+                        Severity="Error" />
+
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="0,8,0,0"
+                        ItemsSource="{Binding Catalog}"
+                        SelectedItem="{Binding SelectedOnline}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type core:OnlineDistro}">
+                                <StackPanel Margin="2,4">
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding FriendlyName}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock
+                        Grid.Row="2"
+                        Margin="2,8,0,0"
+                        FontSize="12"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="A instalação usa --no-launch (sem console interativo)." />
+                </Grid>
+            </TabItem>
+
+            <!-- ─────────────── De arquivo ─────────────── -->
+            <TabItem Header="De arquivo">
+                <StackPanel Margin="4,12,4,4">
+                    <TextBlock Text="Arquivo (.tar, .tar.gz, .tar.xz ou .wsl)" />
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox
+                            Grid.Column="0"
+                            IsReadOnly="True"
+                            PlaceholderText="Nenhum arquivo selecionado"
+                            Text="{Binding FilePath}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Appearance="Secondary"
+                            Command="{Binding BrowseFileCommand}"
+                            Content="Procurar…" />
+                    </Grid>
+
+                    <TextBlock Margin="0,14,0,4" Text="Nome da nova distro" />
+                    <ui:TextBox
+                        PlaceholderText="ex.: Ubuntu-dev"
+                        Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Margin="0,14,0,4" Text="Pasta destino do vhdx" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox
+                            Grid.Column="0"
+                            Text="{Binding FileDestFolder, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Appearance="Secondary"
+                            Command="{Binding BrowseFileDestCommand}"
+                            Content="Procurar…" />
+                    </Grid>
+
+                    <ui:InfoBar
+                        Margin="0,16,0,0"
+                        IsClosable="False"
+                        IsOpen="True"
+                        Message="Para arquivos .wsl o nome e a pasta são ignorados (vêm do próprio pacote)."
+                        Severity="Informational" />
+                </StackPanel>
+            </TabItem>
+
+            <!-- ─────────────── Clonar ─────────────── -->
+            <TabItem Header="Clonar">
+                <StackPanel Margin="4,12,4,4">
+                    <TextBlock Text="Distro de origem" />
+                    <ComboBox
+                        Margin="0,4,0,0"
+                        ItemsSource="{Binding CloneSources}"
+                        SelectedItem="{Binding SelectedCloneSource}" />
+
+                    <TextBlock Margin="0,14,0,4" Text="Nome da cópia" />
+                    <ui:TextBox Text="{Binding CloneNewName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Margin="0,14,0,4" Text="Pasta destino do vhdx" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox
+                            Grid.Column="0"
+                            Text="{Binding CloneDestFolder, UpdateSourceTrigger=PropertyChanged}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Margin="8,0,0,0"
+                            Appearance="Secondary"
+                            Command="{Binding BrowseCloneDestCommand}"
+                            Content="Procurar…" />
+                    </Grid>
+
+                    <ui:InfoBar
+                        Margin="0,16,0,0"
+                        IsClosable="False"
+                        IsOpen="True"
+                        Message="Clona via export + import (uma operação longa). A cópia mantém o usuário da origem."
+                        Severity="Informational" />
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="16,12,16,16"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <ui:Button
+                Appearance="Secondary"
+                Command="{Binding CancelCommand}"
+                Content="Cancelar" />
+            <ui:Button
+                Margin="8,0,0,0"
+                Appearance="Primary"
+                Command="{Binding CreateCommand}"
+                Content="Criar"
+                Icon="{ui:SymbolIcon Add24}" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

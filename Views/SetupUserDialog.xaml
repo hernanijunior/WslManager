@@ -1,0 +1,59 @@
+<ui:FluentWindow
+    x:Class="WslManager.Views.SetupUserDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Usuário padrão"
+    Width="440"
+    Height="330"
+    ExtendsContentIntoTitleBar="True"
+    ResizeMode="NoResize"
+    ShowInTaskbar="False"
+    WindowBackdropType="Mica"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar
+            Grid.Row="0"
+            Title="Usuário padrão"
+            CanMaximize="False"
+            ShowMaximize="False"
+            ShowMinimize="False" />
+
+        <StackPanel Grid.Row="1" Margin="20,8,20,0">
+            <TextBlock
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                Text="A distro foi importada como root. Crie um usuário padrão (opcional) — ele entra no grupo sudo e vira o login automático via /etc/wsl.conf."
+                TextWrapping="Wrap" />
+
+            <TextBlock Margin="0,16,0,4" Text="Nome de usuário" />
+            <ui:TextBox x:Name="UserBox" PlaceholderText="ex.: junior" />
+
+            <TextBlock Margin="0,12,0,4" Text="Senha (opcional)" />
+            <PasswordBox x:Name="PassBox" Padding="10,8" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="20,16,20,16"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <ui:Button
+                Appearance="Secondary"
+                Click="OnSkip"
+                Content="Pular" />
+            <ui:Button
+                Margin="8,0,0,0"
+                Appearance="Primary"
+                Click="OnCreate"
+                Content="Criar usuário"
+                Icon="{ui:SymbolIcon Person24}" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

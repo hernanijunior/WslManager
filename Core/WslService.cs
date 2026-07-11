@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
 namespace WslManager.Core;
@@ -190,6 +191,81 @@ public sealed class WslService
 
     public Task<WslResult> SetDefaultAsync(string name, CancellationToken ct = default)
         => RunAsync(ct, "--set-default", name);
+
+    // ──────────────────────── criação de distros ─────────────────────────
+
+    // NAME<2+ espaços>FRIENDLY NAME — o cabeçalho e a saída localizados não têm
+    // esse recuo, então o padrão isola só as linhas de dados do catálogo.
+    private static readonly Regex OnlineRow = new(@"^(\S+)\s{2,}(.+?)\s*$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Lê o catálogo de distros instaláveis (<c>wsl --list --online</c>). Requer
+    /// internet. Duas colunas NAME / FRIENDLY NAME; pula o preâmbulo e o cabeçalho.
+    /// </summary>
+    public async Task<IReadOnlyList<OnlineDistro>> ListOnlineAsync(CancellationToken ct = default)
+    {
+        var r = await RunAsync(ct, "--list", "--online").ConfigureAwait(false);
+        if (!r.Ok)
+            throw new InvalidOperationException(
+                string.IsNullOrWhiteSpace(r.StdErr) ? r.StdOut.Trim() : r.StdErr.Trim());
+
+        var list = new List<OnlineDistro>();
+        foreach (var raw in r.StdOut.Split('\n'))
+        {
+            var line = raw.Trim('\r', '\0', ' ', '\t');
+            if (line.Length == 0) continue;
+
+            var m = OnlineRow.Match(line);
+            if (!m.Success) continue; // preâmbulo (frases com espaço simples)
+
+            var name = m.Groups[1].Value;
+            // cabeçalho: "NAME" (en) / "NOME" (pt-BR) — a única coluna sem espaço fixo
+            if (name.Equals("NAME", StringComparison.OrdinalIgnoreCase) ||
+                name.Equals("NOME", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            list.Add(new OnlineDistro(name, m.Groups[2].Value.Trim()));
+        }
+
+        return list;
+    }
+
+    /// <summary>Instala do catálogo. `--no-launch` é obrigatório (senão abre console interativo).</summary>
+    public Task<WslResult> InstallFromCatalogAsync(string name, CancellationToken ct)
+        => RunLongAsync(ct, "--install", "-d", name, "--no-launch");
+
+    /// <summary>Importa um .tar* criando o vhdx em <paramref name="installLocation"/>.</summary>
+    public Task<WslResult> ImportAsync(string name, string installLocation, string tarPath, CancellationToken ct)
+        => RunLongAsync(ct, "--import", name, installLocation, tarPath);
+
+    /// <summary>Instala a partir de um pacote .wsl (nome vem embutido no arquivo).</summary>
+    public Task<WslResult> InstallFromFileAsync(string wslPath, CancellationToken ct)
+        => RunLongAsync(ct, "--install", "--from-file", wslPath);
+
+    /// <summary>Exporta a distro para um .tar (operação longa; watch no arquivo de saída).</summary>
+    public Task<WslResult> ExportAsync(string name, string tarPath, CancellationToken ct)
+        => RunLongAsync(ct, "--export", name, tarPath);
+
+    /// <summary>
+    /// Cria o usuário padrão numa distro recém-importada: useradd (+sudo),
+    /// senha opcional e grava [user] no /etc/wsl.conf. Roda como root e passa
+    /// usuário/senha como argv ($1/$2) para não interpolar no script (injeção).
+    /// Acorda a distro — é ação explícita do usuário, não polling.
+    /// </summary>
+    public Task<WslResult> SetupDefaultUserAsync(string distro, string user, string? password, CancellationToken ct = default)
+    {
+        var script =
+            "set -e; " +
+            "useradd -m -s /bin/bash \"$1\" 2>/dev/null || true; " +
+            // grupo de sudo varia entre distros (sudo/wheel); ignora se não existir
+            "usermod -aG sudo \"$1\" 2>/dev/null || usermod -aG wheel \"$1\" 2>/dev/null || true; " +
+            "if [ -n \"$2\" ]; then printf '%s:%s' \"$1\" \"$2\" | chpasswd; fi; " +
+            "if ! grep -q '^\\[user\\]' /etc/wsl.conf 2>/dev/null; then " +
+            "printf '\\n[user]\\ndefault=%s\\n' \"$1\" >> /etc/wsl.conf; fi";
+
+        return RunAsync(ct, "-d", distro, "-u", "root", "--",
+            "bash", "-c", script, "_", user, password ?? string.Empty);
+    }
 
     // ─────────────────────────── conveniências ───────────────────────────
 

@@ -95,6 +95,41 @@ public sealed partial class MainViewModel : ObservableObject
         (wsl, ct) => wsl.ShutdownAsync(ct),
         confirm: "Isso derruba a VM inteira: TODAS as distros, incluindo docker-desktop se estiver em uso.\n\nDesligar tudo?");
 
+    [RelayCommand]
+    private async Task NewDistroAsync()
+    {
+        var dialogVm = new NewDistroViewModel(
+            Wsl,
+            Distros.Select(d => d.Name),
+            Distros.Where(d => !d.IsSystem).Select(d => d.Name),
+            LongOps);
+
+        var dialog = new NewDistroDialog(dialogVm) { Owner = Application.Current.MainWindow };
+        if (dialog.ShowDialog() != true || dialogVm.Result is not { } req) return;
+
+        var ok = await RunLongOperationAsync(req.Title, req.LockKey, req.Action);
+
+        if (ok && req.SetupUserForDistro is { } distro)
+            await OfferUserSetupAsync(distro);
+    }
+
+    /// <summary>Pós-import: oferece criar o usuário padrão da distro.</summary>
+    private async Task OfferUserSetupAsync(string distro)
+    {
+        var dlg = new SetupUserDialog { Owner = Application.Current.MainWindow };
+        if (dlg.ShowDialog() != true || string.IsNullOrWhiteSpace(dlg.UserName)) return;
+
+        await ExecuteAsync(
+            $"Configurando usuário em {distro}…",
+            async (wsl, ct) =>
+            {
+                var r = await wsl.SetupDefaultUserAsync(distro, dlg.UserName!, dlg.Password, ct);
+                // termina a distro para o [user] do wsl.conf valer no próximo start
+                if (r.Ok) await wsl.TerminateAsync(distro, ct);
+                return r;
+            });
+    }
+
     /// <summary>
     /// Caminho único para toda ação rápida: confirma (opcional), trava a UI,
     /// executa com timeout de 60s, mostra erro do wsl.exe se houver e atualiza a lista.
