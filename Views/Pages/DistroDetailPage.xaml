@@ -172,18 +172,40 @@
                 </StackPanel>
             </ui:Card>
 
-            <!-- Backup e remoção (preenchidos na Fase 5) -->
+            <!-- Backup e remoção -->
             <TextBlock
                 Margin="2,20,0,0"
                 FontSize="15"
                 FontWeight="SemiBold"
                 Text="Backup e remoção" />
-            <ui:InfoBar
-                Margin="0,8,0,0"
-                IsClosable="False"
-                IsOpen="True"
-                Message="Exportar backup e apagar (unregister) serão adicionados na Fase 5."
-                Severity="Informational" />
+            <ui:Card Margin="0,8,0,0" Padding="16">
+                <StackPanel>
+                    <TextBlock
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="Exportar gera um .tar restaurável pela aba &quot;De arquivo&quot; em Nova distro."
+                        TextWrapping="Wrap" />
+                    <WrapPanel Margin="0,12,0,0">
+                        <ui:Button
+                            Appearance="Secondary"
+                            Command="{Binding ExportCommand}"
+                            Content="Exportar backup"
+                            Icon="{ui:SymbolIcon ArrowExport24}" />
+                        <ui:Button
+                            Margin="8,0,0,0"
+                            Appearance="Danger"
+                            Command="{Binding DeleteCommand}"
+                            Content="Apagar…"
+                            Icon="{ui:SymbolIcon Delete24}"
+                            Visibility="{Binding CanDelete, Converter={StaticResource BoolToVis}}" />
+                    </WrapPanel>
+                    <ui:InfoBar
+                        Margin="0,12,0,0"
+                        IsClosable="False"
+                        IsOpen="{Binding IsSystem}"
+                        Message="Distros de sistema (Docker/Rancher/Podman) não podem ser apagadas por aqui."
+                        Severity="Informational" />
+                </StackPanel>
+            </ui:Card>
         </StackPanel>
     </ScrollViewer>
 </Page>

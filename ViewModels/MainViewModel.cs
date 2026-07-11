@@ -196,6 +196,58 @@ public sealed partial class MainViewModel : ObservableObject
             "Recuperar espaço", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
+    /// <summary>
+    /// Exporta a distro para um .tar (SaveFileDialog + operação longa com
+    /// progresso por tamanho do arquivo). Retorna true se exportou com sucesso.
+    /// </summary>
+    internal async Task<bool> ExportDistroAsync(DistroViewModel distro)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exportar distro",
+            FileName = $"{distro.Name}_{DateTime.Now:yyyy-MM-dd}.tar",
+            Filter = "Tarball (*.tar)|*.tar|Todos os arquivos (*.*)|*.*",
+            DefaultExt = ".tar",
+            OverwritePrompt = true,
+        };
+        if (dlg.ShowDialog() != true) return false;
+
+        var path = dlg.FileName;
+        return await RunLongOperationAsync(
+            $"Exportando {distro.Name}…",
+            distro.Name,
+            (wsl, progress, ct) =>
+            {
+                progress.Report(LongOpUpdate.Watch($"Exportando {distro.Name}…", path));
+                return wsl.ExportAsync(distro.Name, path, ct);
+            });
+    }
+
+    /// <summary>
+    /// Apagar (unregister) com o fluxo blindado do CLAUDE.md: nunca para distros
+    /// de sistema; mostra o que será perdido; oferece exportar antes; exige
+    /// digitar o nome exato para habilitar. Irreversível.
+    /// </summary>
+    internal async Task DeleteDistroAsync(DistroViewModel distro)
+    {
+        if (distro.IsSystem) return; // trava dura: nunca apagar distro de sistema
+
+        var dialog = new DeleteDistroDialog(distro.Name, distro.VhdxPath, distro.VhdSizeText)
+        {
+            Owner = Application.Current.MainWindow,
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        // Exportar antes (se marcado): se o usuário cancelar/falhar, aborta o apagar.
+        if (dialog.ExportFirst && !await ExportDistroAsync(distro))
+            return;
+
+        await RunLongOperationAsync(
+            $"Apagando {distro.Name}…",
+            distro.Name,
+            (wsl, _, ct) => wsl.UnregisterAsync(distro.Name, ct));
+    }
+
     /// <summary>Pós-import: oferece criar o usuário padrão da distro.</summary>
     private async Task OfferUserSetupAsync(string distro)
     {

@@ -254,6 +254,13 @@ public sealed class WslService
         => RunLongAsync(ct, "--manage", name, "--set-sparse", "true");
 
     /// <summary>
+    /// IRREVERSÍVEL: apaga a distro e todos os seus dados (<c>wsl --unregister</c>).
+    /// O fluxo de confirmação blindado é responsabilidade da UI (CLAUDE.md).
+    /// </summary>
+    public Task<WslResult> UnregisterAsync(string name, CancellationToken ct)
+        => RunLongAsync(ct, "--unregister", name);
+
+    /// <summary>
     /// Cria o usuário padrão numa distro recém-importada: useradd (+sudo),
     /// senha opcional e grava [user] no /etc/wsl.conf. Roda como root e passa
     /// usuário/senha como argv ($1/$2) para não interpolar no script (injeção).

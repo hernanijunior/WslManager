@@ -73,11 +73,20 @@ public sealed partial class DistroViewModel : ObservableObject
     /// <summary>Chamado quando o limiar muda, para reavaliar <see cref="DiskAlert"/>.</summary>
     public void RaiseDiskAlert() => OnPropertyChanged(nameof(DiskAlert));
 
+    /// <summary>Distros de sistema nunca podem ser apagadas por aqui.</summary>
+    public bool CanDelete => !IsSystem;
+
     [RelayCommand]
     private void OpenDetail() => _owner.RequestDetail(this);
 
     [RelayCommand]
     private Task ReclaimSpaceAsync() => _owner.ReclaimSpaceAsync(this);
+
+    [RelayCommand]
+    private Task ExportAsync() => _owner.ExportDistroAsync(this);
+
+    [RelayCommand(CanExecute = nameof(CanDelete))]
+    private Task DeleteAsync() => _owner.DeleteDistroAsync(this);
 
     [RelayCommand(CanExecute = nameof(CanWake))]
     private Task WakeAsync() => _owner.ExecuteAsync(
